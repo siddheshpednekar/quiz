@@ -4,6 +4,10 @@ import mysql.connector
 from operator import itemgetter
 import random
 from string import ascii_letters, digits
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 root = tk.Tk()
 sw = root.winfo_screenwidth()
@@ -433,6 +437,10 @@ class AdminWindow:
                                      command=self.joinclass,
                                      fg='white', bg='darkblue', activeforeground='white', activebackground='blue')
         self.join_class2.grid(row=2, pady=10)
+        self.stats = tk.Button(self.af, text='user stats', font=('arial', 25), bd=1, width=12,
+                               command=self.statswin,
+                               fg='white', bg='darkblue', activeforeground='white', activebackground='blue')
+        self.stats.grid(row=3, pady=10)
 
     def lgout(self):
         self.af.destroy()
@@ -453,6 +461,11 @@ class AdminWindow:
         self.sf.destroy()
         self.af.destroy()
         AdminClass(root)
+
+    def statswin(self):
+        self.sf.destroy()
+        self.af.destroy()
+        StatsWindow1(root)
 
 
 class AdminClass:
@@ -993,6 +1006,142 @@ class ScoreWindow:
             UserHome(root)
         else:
             AdminWindow(root)
+
+
+class StatsWindow1:
+    def __init__(self, master):
+        self.cw = tk.Frame(master)
+        self.cw.place(x=550, y=150)
+        self.sf = tk.Frame(master)
+        self.sf.place(width=sw, height=150, y=0)
+        self.bckbtn = tk.Button(self.sf, text='back', font=('arial', 25), bd=1, width=10, command=self.back,
+                                fg='white', bg='darkblue', activeforeground='white', activebackground='blue')
+        self.bckbtn.place(x=20, y=20)
+        self.selected_quiz = tk.StringVar()
+        self.gep = 'get_exam', [uanm]
+        self.ge = list(map(itemgetter(0), db1(self.gep[0], self.gep[1])))
+        print(self.ge)
+        self.gecp = 'get_examcode', [uanm]
+        self.gec = list(map(itemgetter(0), db1(self.gecp[0], self.gecp[1])))
+        print(self.gec)
+        self.exmlis = [self.ge[i] + "   ||   " + self.gec[i] for i in range(len(self.ge))]
+        if len(self.ge) < 1:
+            self.lerror = tk.Label(self.cw, text="join an examination to attempt it", font=('arial', 25), bd=1)
+            self.lerror.grid(row=0)
+        else:
+            self.selected_quiz.set(self.exmlis[0])
+            self.exname = tk.Label(self.cw, text='exam name   ||   exam code', font=('arial', 25), bd=1)
+            self.exname.grid(row=0)
+            self.select_button = tk.OptionMenu(self.cw, self.selected_quiz, *self.exmlis)
+
+            self.select_button.grid(row=1, sticky="ew")
+
+            self.select_button.config(font=('arial', 25), bd=1,
+                                      fg='white', bg='darkblue', activeforeground='white', activebackground='blue')
+            self.select_button["menu"].config(font=('arial', 15), foreground='white', background="darkblue")
+            self.play_button = tk.Button(self.cw, text="select exam", font=('arial', 25),
+                                         bd=1, command=self.quiz,
+                                         fg='white', bg='darkblue', activeforeground='white', activebackground='blue')
+            self.play_button.grid(row=2)
+
+    def back(self):
+        self.cw.destroy()
+        self.sf.destroy()
+        print(uarl)
+        if uarl == "student":
+            UserHome(root)
+        else:
+            AdminWindow(root)
+
+    def quiz(self):
+        txt = self.selected_quiz.get()
+        txtspl = txt.split("   ||   ")
+        print(txtspl)
+        ge2p = 'get_exam2', [txtspl[1]]
+        ge2 = int(db1(ge2p[0], ge2p[1])[0][0])
+        print(ge2)
+        StatsWindow2(root, txtspl[1])
+        self.cw.destroy()
+        self.sf.destroy()
+
+
+class StatsWindow2:
+    def __init__(self, master, exm):
+        print(exm)
+        self.exam = exm
+        self.uf = tk.Frame(master)
+        self.uf.place(x=550, y=150)
+        self.sf = tk.Frame(master)
+        self.sf.place(width=sw, height=150, y=0)
+        self.bckbtn = tk.Button(self.sf, text='back', font=('arial', 25), bd=1, width=10, command=self.back,
+                                fg='white', bg='darkblue', activeforeground='white', activebackground='blue')
+        self.bckbtn.place(x=20, y=20)
+        self.selected_quiz = tk.StringVar()
+        self.gqp = 'get_quiz', [exm]
+        self.gq = list(map(itemgetter(0), db1(self.gqp[0], self.gqp[1])))
+        print(self.gq)
+        if len(self.gq) < 1:
+            self.lerror = tk.Label(self.uf, text='no subjects available', font=('arial', 25), bd=1)
+            self.lerror.grid(row=0)
+        else:
+            self.selected_quiz.set(self.gq[0])
+            self.select_button = tk.OptionMenu(self.uf, self.selected_quiz, *self.gq)
+            self.select_button.grid(row=0, sticky="ew")
+            self.select_button.config(font=('arial', 25), bd=1,
+                                      fg='white', bg='darkblue', activeforeground='white', activebackground='blue')
+            self.select_button["menu"].config(font=('arial', 15), foreground='white', background="darkblue")
+            self.play_button = tk.Button(self.uf, text="get stats", command=self.quiz, font=('arial', 25),
+                                         bd=1, width=12,
+                                         fg='white', bg='darkblue', activeforeground='white', activebackground='blue')
+            self.play_button.grid(row=1)
+
+    def back(self):
+        self.uf.destroy()
+        self.sf.destroy()
+        StatsWindow1(root)
+
+    def quiz(self):
+        quizselected = self.selected_quiz.get()
+        gsip = 'get_subjectid', [self.exam, self.selected_quiz.get()]
+        gsi = db1(gsip[0], gsip[1])[0][0]
+        print(gsi)
+        vqts2p = 'ver_questions2', [self.exam, gsi]
+        vqts2 = db1(vqts2p[0], vqts2p[1])[0][0]
+        if vqts2 < 1:
+            messagebox.showinfo("info", "admin failed to insert questions in this subject")
+        else:
+            gres = 'get_results', [gsi]
+            res = db1(gres[0], gres[1])
+            print(res)
+            un = np.array(list(map(itemgetter(0), res)))
+            print(un)
+            print(len(un))
+            if len(un) < 1:
+                messagebox.showinfo("info", "no one has attempted this quiz yet")
+            else:
+                mo = np.array(list(map(itemgetter(2), res)))
+                print(mo)
+                to = np.array(list(map(itemgetter(3), res)))
+                print(to)
+                mto = str(to[0])
+                dat = {'users': un,
+                       'marks_obtained': mo}
+                df = pd.DataFrame(dat)
+                dat2 = df.sort_values(by=['marks_obtained'], ascending=False)
+
+                gr = sns.barplot(x="users", y="marks_obtained", data=dat2)
+                for p in gr.patches:
+                    gr.annotate(format(p.get_height(), '.1f'),
+                                (p.get_x() + p.get_width() / 2., p.get_height()),
+                                ha='center', va='center',
+                                size=15,
+                                xytext=(0, 5),
+                                textcoords='offset points')
+                plt.xticks(rotation="vertical")
+                plt.xlabel("username")
+                plt.ylabel("marks obtained out of " + mto)
+                plt.title(str(quizselected))
+                plt.show()
 
 
 run = StartWindow(root)
